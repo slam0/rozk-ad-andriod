@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Numer wersji bierzemy z GitHub Actions (kolejny numer uruchomienia), żeby każda kompilacja
+// mogła zastąpić poprzednią. Lokalnie: gradle assembleRelease -PvCode=5 -PvName=1.0.5
+def vCode = (project.findProperty('vCode') ?: '1').toInteger()
+def vName = project.findProperty('vName') ?: '1.0.0'
+
+android {
+    namespace 'com.nazar0vsky.rozklad'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.nazar0vsky.rozklad'
+        minSdk 21
+        targetSdk 34
+        versionCode vCode
+        versionName vName
+    }
+
+    // Stały klucz podpisu z repozytorium. Dzięki niemu nowa wersja instaluje się na starej bez odinstalowywania.
+    // To klucz hobbystyczny, nie służy do Sklepu Play (hasło celowo jest jawne).
+    signingConfigs {
+        rozklad {
+            storeFile file('rozklad.keystore')
+            storePassword 'rozklad-android'
+            keyAlias 'rozklad'
+            keyPassword 'rozklad-android'
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.rozklad
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}

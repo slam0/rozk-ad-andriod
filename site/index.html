@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rozkład – rozkład jazdy offline dla iOS 6</title>
+<meta name="description" content="Rozkład: darmowa aplikacja z rozkładem jazdy Warszawy (autobus, tramwaj, pociąg, metro) działająca offline na iOS 6.">
+<link rel="icon" href="icon.png"><link rel="apple-touch-icon" href="icon.png">
+<style>
+body{margin:0;font:16px/1.4 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#2b2b2b;background-color:#d8d3c5;-webkit-text-size-adjust:100%;background-image:-webkit-repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0,rgba(255,255,255,.22) 1px,transparent 1px,transparent 4px),-webkit-repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0,rgba(0,0,0,.06) 1px,transparent 1px,transparent 4px);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0,rgba(255,255,255,.22) 1px,transparent 1px,transparent 4px),repeating-linear-gradient(-45deg,rgba(0,0,0,.06) 0,rgba(0,0,0,.06) 1px,transparent 1px,transparent 4px)}
+header{position:relative;margin:0 0 4px;padding:14px 16px;color:#f6ecd8;background-color:#5a3a22;background-image:-webkit-linear-gradient(top,#7d5434,#4a2e1a);background-image:linear-gradient(to bottom,#7d5434,#4a2e1a);border-bottom:1px solid #22120a;-webkit-box-shadow:0 2px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.22);box-shadow:0 2px 5px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.22)}
+header:after{content:"";position:absolute;left:5px;right:5px;top:5px;bottom:5px;border:1px dashed rgba(246,226,186,.6);border-radius:4px;pointer-events:none}
+.hd{display:table;max-width:640px;margin:0 auto}
+.hd>div{display:table-cell;vertical-align:middle}
+.hd img{display:block;width:57px;height:57px;margin-right:14px;border-radius:13px;-webkit-box-shadow:0 2px 4px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.35);box-shadow:0 2px 4px rgba(0,0,0,.6),0 0 0 1px rgba(0,0,0,.35)}
+.hd b{display:block;font-size:22px;line-height:1.15;text-shadow:0 -1px 0 rgba(0,0,0,.8)}
+.hd span{display:block;margin-top:3px;font-size:13px;color:#e4d3b3;text-shadow:0 -1px 0 rgba(0,0,0,.6)}
+.wrap{max-width:640px;margin:0 auto;padding:0 12px 30px}
+.lead{margin:14px 4px 0;color:#5f594b;text-shadow:0 1px 0 rgba(255,255,255,.75)}
+.gl{margin:20px 6px 7px;font-size:15px;font-weight:bold;color:#6d675a;text-shadow:0 1px 0 #fff}
+.note{margin:0 4px 10px;font-size:14px;color:#6d675a;text-shadow:0 1px 0 rgba(255,255,255,.75)}
+.grp{overflow:hidden;margin:0;padding:0;list-style:none;background:#fff;border:1px solid #a29e90;border-radius:10px;-webkit-box-shadow:0 1px 0 rgba(255,255,255,.8);box-shadow:0 1px 0 rgba(255,255,255,.8)}
+.grp:empty{display:none}
+.grp+.grp{margin-top:10px}
+.pad{padding:12px}
+.pad p{margin:0 0 10px}
+a{color:#1b62c8}
+[hidden]{display:none!important}
+input[type=text]{width:100%;-webkit-box-sizing:border-box;box-sizing:border-box;padding:9px 14px;font:inherit;border:1px solid #8a8a8a;border-radius:18px;background:#fff;-webkit-box-shadow:inset 0 2px 4px rgba(0,0,0,.35);box-shadow:inset 0 2px 4px rgba(0,0,0,.35)}
+input[type=text]:disabled{background:#eee}
+#msg{margin:0;font-weight:bold;color:#5a4a2a}
+#msg.bad{color:#a60f25}
+#msg:empty{display:none}
+li{padding:10px 12px;border-top:1px solid #dcdcdc;text-shadow:0 1px 0 #fff}
+li:first-child{border-top:0}
+li small{color:#777}
+li button{width:28px;height:28px;margin-right:8px;padding:0;font:bold 18px/24px Helvetica,Arial,sans-serif;text-align:center;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5);cursor:pointer;border:1px solid #1f5c14;border-radius:50%;background-color:#3c9d2a;background-image:-webkit-linear-gradient(top,#7dd35f,#2f8a1e);background-image:linear-gradient(to bottom,#7dd35f,#2f8a1e);-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4)}
+li button[data-r]{border-color:#6d0715;background-color:#c8102e;background-image:-webkit-linear-gradient(top,#e8505f,#a60f25);background-image:linear-gradient(to bottom,#e8505f,#a60f25)}
+#steps{display:table;table-layout:fixed;width:100%;margin:14px 0 0;border:1px solid #6b6552;border-radius:10px;overflow:hidden;-webkit-box-shadow:0 1px 0 rgba(255,255,255,.8);box-shadow:0 1px 0 rgba(255,255,255,.8)}
+.st{display:table-cell;padding:9px 2px 8px;text-align:center;font:bold 13px/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif;color:#4a3b22;text-shadow:0 1px 0 #fff;cursor:pointer;border-left:1px solid #b9b39e;background-color:#ece6d3;background-image:-webkit-linear-gradient(top,#fffdf4,#e1dac4);background-image:linear-gradient(to bottom,#fffdf4,#e1dac4)}
+.st:first-child{border-left:0}
+.st i{display:block;width:24px;height:24px;margin:0 auto 4px;font:bold 14px/23px Helvetica,Arial,sans-serif;font-style:normal;color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5);border-radius:12px;-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.5),0 1px 2px rgba(0,0,0,.4)}
+.st small{display:block;font-weight:normal;color:#8a836f}
+.st.on{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.5);background-color:#5a3a22;background-image:-webkit-linear-gradient(top,#4a2e1a,#7d5434);background-image:linear-gradient(to bottom,#4a2e1a,#7d5434)}
+.st.on small{color:#e4d3b3}
+.nav{margin-top:16px;overflow:hidden}
+.nav button{float:left;width:48%}
+.nav button+button{float:right}
+.btn{display:block;padding:13px;text-align:center;text-decoration:none;font:bold 17px "Helvetica Neue",Helvetica,Arial,sans-serif;color:#333;text-shadow:0 1px 0 #fff;cursor:pointer;border:1px solid #8a8a8a;border-radius:10px;background-color:#e4e4e4;background-image:-webkit-linear-gradient(top,#fdfdfd,#d3d3d3);background-image:linear-gradient(to bottom,#fdfdfd,#d3d3d3);-webkit-box-shadow:inset 0 1px 0 #fff,0 2px 4px rgba(0,0,0,.3);box-shadow:inset 0 1px 0 #fff,0 2px 4px rgba(0,0,0,.3)}
+.btn.red{color:#fff;text-shadow:0 -1px 0 rgba(0,0,0,.55);border-color:#6d0715;background-color:#c8102e;background-image:-webkit-linear-gradient(top,#e8505f,#a60f25);background-image:linear-gradient(to bottom,#e8505f,#a60f25);-webkit-box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 2px 4px rgba(0,0,0,.4)}
+.btn:active{background-image:-webkit-linear-gradient(top,#cfcfcf,#e9e9e9);background-image:linear-gradient(to bottom,#cfcfcf,#e9e9e9)}
+.btn.red:active{background-image:-webkit-linear-gradient(top,#a60f25,#c8102e);background-image:linear-gradient(to bottom,#a60f25,#c8102e)}
+.btn:disabled{color:#eee;text-shadow:0 -1px 0 rgba(0,0,0,.3);cursor:default;border-color:#777;background-color:#999;background-image:-webkit-linear-gradient(top,#bbb,#8d8d8d);background-image:linear-gradient(to bottom,#bbb,#8d8d8d)}
+#sum{margin:12px 4px 0;font-size:14px;color:#5f594b;text-shadow:0 1px 0 rgba(255,255,255,.75)}
+#fin{margin-top:16px}
+#fin .btn{width:100%;-webkit-box-sizing:border-box;box-sizing:border-box;margin-top:10px}
+#fin p{margin:0 0 6px}
+#warn{margin:12px 4px 0;font-weight:bold;color:#a60f25}
+#warn:empty{display:none}
+#langs{position:absolute;top:9px;right:12px;z-index:3;font-size:12px}
+#langs a{display:inline-block;margin-left:5px;padding:3px 8px;color:#f6ecd8;text-decoration:none;font-weight:bold;border:1px solid rgba(246,226,186,.55);border-radius:10px;text-shadow:0 -1px 0 rgba(0,0,0,.6);cursor:pointer}
+#langs a.on{color:#4a2e1a;text-shadow:0 1px 0 rgba(255,255,255,.5);background:#f1dfba;border-color:#f1dfba}
+
+.hero{margin:16px 4px 0;text-align:center}
+.hero img{width:114px;height:114px;border-radius:26px;-webkit-box-shadow:0 3px 8px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35);box-shadow:0 3px 8px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.35)}
+.hero h1{margin:10px 0 2px;font-size:30px;color:#4a2e1a;text-shadow:0 1px 0 #fff}
+.hero p{margin:0;color:#5f594b;text-shadow:0 1px 0 rgba(255,255,255,.75)}
+.dlbox .btn{margin-top:10px}
+.dlbox .btn:first-of-type{margin-top:0}
+#ver{margin:0 0 10px;font-weight:bold;color:#5a4a2a}
+#soon{margin:0;color:#a60f25;font-weight:bold}
+.feat{padding:0;margin:0;list-style:none}
+.feat li{padding:9px 12px 9px 34px;position:relative}
+.feat li:before{content:"\2713";position:absolute;left:12px;top:8px;font-weight:bold;color:#2f8a3a}
+ol.how{margin:0;padding:6px 12px 6px 34px}
+ol.how li{padding:8px 0;border-top:0;text-shadow:none}
+input.repo{margin-top:8px;font-size:14px;text-align:center}
+.tiny{margin:8px 2px 0;font-size:13px;color:#6d675a;text-shadow:0 1px 0 rgba(255,255,255,.75)}
+</style></head><body>
+<header><div id="langs"></div><div class="hd"><div><img src="icon.png" alt=""></div><div><b>Rozkład</b><span data-t="sub"></span></div></div></header>
+<div class="wrap">
+<div class="hero"><p data-t="lead"></p></div>
+
+<div class="gl" data-t="gl_dl"></div>
+<div class="grp pad dlbox">
+  <p id="ver"></p>
+  <p id="soon" hidden data-t="soon"></p>
+  <div id="have" hidden>
+    <div id="ipabox">
+      <a class="btn red" href="pobierz/Rozklad.ipa" data-t="b_ipa"></a>
+      <p class="tiny" data-t="n_ipa"></p>
+    </div>
+    <div id="apkbox" hidden>
+      <p id="verapk" style="margin-top:14px"></p>
+      <a class="btn red" href="pobierz/Rozklad.apk" data-t="b_apk"></a>
+      <p class="tiny" data-t="n_apk"></p>
+    </div>
+  </div>
+  <a class="btn" id="cyd" href="#" data-t="b_cydia" style="margin-top:14px"></a>
+  <p class="tiny" style="margin-top:12px"><b data-t="repo_t"></b></p>
+  <input type="text" class="repo" id="repo" readonly value="">
+  <p class="tiny"><span data-t="repo_how"></span> <a id="repopage" href="#" data-t="repo_page"></a></p>
+</div>
+
+<div class="gl" data-t="gl_start"></div>
+<div class="grp"><ol class="how">
+  <li data-t="s1"></li><li data-t="s2"></li><li data-t="s3"></li>
+</ol></div>
+<a class="btn red" id="wiz" href="kreator/" style="margin-top:12px" data-t="b_wiz"></a>
+
+<div class="gl" data-t="gl_feat"></div>
+<ul class="grp feat">
+  <li data-t="f1"></li><li data-t="f2"></li><li data-t="f3"></li><li data-t="f4"></li><li data-t="f5"></li><li data-t="f6"></li>
+</ul>
+
+<div class="gl" data-t="gl_req"></div>
+<div class="grp pad"><p data-t="req1"></p><p data-t="req2"></p><p data-t="req3"></p></div>
+
+<p class="note" style="margin-top:26px;text-align:center" data-t="foot"></p>
+<p class="note" style="text-align:center"><a href="https://github.com/slam0/Rozklad" data-t="src"></a> · nazar0vsky 2026</p>
+</div>
+<script>
+(function(){
+var $=function(i){return document.getElementById(i)};
+var I={
+pl:{title:'Rozkład – rozkład jazdy offline dla iOS 6',sub:'rozkład jazdy offline dla iOS 6',
+ lead:'Rozkład jazdy Warszawy w kieszeni, bez internetu: autobusy, tramwaje, pociągi i metro. Darmowa aplikacja na iPhone’a i iPoda touch z iOS 6.',
+ gl_dl:'Pobierz',soon:'Pierwsza wersja aplikacji zostanie tu opublikowana wkrótce.',
+ ver:'Wersja {0} · {1} · {2} KB',b_ipa:'Pobierz na iOS 6 (.ipa)',b_apk:'Pobierz na Androida (.apk)',ver_apk:'Android: wersja {0} · {1} KB',n_apk:'Po pobraniu otwórz plik .apk. Android zapyta o zgodę na instalację z tego źródła – zezwól tej jednej przeglądarce. Wymaga Androida 5.0 lub nowszego.',repo_page:'Strona repozytorium →',n_ipa:'Plik .ipa otwórz w Filza lub iFile i wybierz Install (wymaga AppSync Unified) albo zainstaluj go z komputera przez iTunes.',b_cydia:'Dodaj do Cydii',
+ repo_t:'Albo dodaj nasze repozytorium w Cydii:',repo_how:'Cydia → Manage → Sources → Edit → Add, wklej adres, potem wyszukaj „Rozkład”. Dzięki temu Cydia sama poinformuje o nowych wersjach.',
+ gl_start:'Jak zacząć',s1:'Zainstaluj aplikację na telefonie.',s2:'Wejdź w Kreator, znajdź swoje przystanki (autobus, tramwaj, pociąg, metro).',s3:'Dotknij „Otwórz w aplikacji Rozkład” – aplikacja sama pobierze rozkład i dalej działa bez internetu.',
+ b_wiz:'Kreator przystanków →',
+ gl_feat:'Co potrafi',f1:'Rozkład działa offline – internet potrzebny tylko do pobrania danych.',f2:'Odliczanie do odjazdu co sekundę.',f3:'Ulubione przystanki i przypomnienia o odjeździe.',f4:'Cztery motywy w stylu iOS 6 (skóra, czerwony, klasyczny, grafit).',f5:'Język: polski, angielski, rosyjski.',f6:'Dane z ZTM Warszawa odświeżane co tydzień.',
+ gl_req:'Wymagania',req1:'iPhone lub iPod touch z iOS 6.0 lub nowszym po jailbreaku (potrzebna Cydia). Urządzenia 32-bitowe: iPhone 3GS, 4, 4S, 5 oraz iPod touch 4 i 5.',
+ req2:'Testowane na iOS 6.1.3. Na nowszych systemach (np. iOS 8) są znane problemy.',
+ req3:'Android 5.0 lub nowszy (aplikacja na Androida jest w wersji próbnej, mało testowana).',
+ foot:'Dane rozkładowe: ZTM Warszawa (GTFS), udostępnia mkuran.pl. Aplikacja jest nieoficjalna i niezwiązana z ZTM Warszawa. Rozkład może być nieaktualny – sprawdzaj datę ważności.',src:'Kod źródłowy'},
+en:{title:'Rozkład – offline timetable for iOS 6',sub:'offline timetable for iOS 6',
+ lead:'The Warsaw timetable in your pocket, without internet: buses, trams, trains and metro. A free app for iPhone and iPod touch running iOS 6.',
+ gl_dl:'Download',soon:'The first version of the app will be published here soon.',
+ ver:'Version {0} · {1} · {2} KB',b_ipa:'Download for iOS 6 (.ipa)',b_apk:'Download for Android (.apk)',ver_apk:'Android: version {0} · {1} KB',n_apk:'After downloading, open the .apk file. Android will ask to allow installing from this source – allow it for this one browser. Needs Android 5.0 or later.',repo_page:'Repository page →',n_ipa:'Open the .ipa in Filza or iFile and choose Install (needs AppSync Unified), or install it from a computer with iTunes.',b_cydia:'Add to Cydia',
+ repo_t:'Or add our repository in Cydia:',repo_how:'Cydia → Manage → Sources → Edit → Add, paste the address, then search for “Rozkład”. This way Cydia will tell you about new versions.',
+ gl_start:'Getting started',s1:'Install the app on your phone.',s2:'Open the Creator and find your stops (bus, tram, train, metro).',s3:'Tap “Open in the Rozkład app” – the app downloads the timetable itself and keeps working without internet.',
+ b_wiz:'Stop creator →',
+ gl_feat:'What it does',f1:'Works offline – internet is only needed to download the data.',f2:'Countdown to departure, updated every second.',f3:'Favourite stops and departure reminders.',f4:'Four iOS 6 style themes (leather, red, classic, graphite).',f5:'Languages: Polish, English, Russian.',f6:'ZTM Warszawa data refreshed every week.',
+ gl_req:'Requirements',req1:'iPhone or iPod touch with iOS 6.0 or later, jailbroken (Cydia needed). 32-bit devices: iPhone 3GS, 4, 4S, 5 and iPod touch 4 and 5.',
+ req2:'Tested on iOS 6.1.3. There are known problems on newer systems (e.g. iOS 8).',
+ req3:'Android 5.0 or later (the Android app is a preview and has had little testing).',
+ foot:'Timetable data: ZTM Warszawa (GTFS), provided by mkuran.pl. The app is unofficial and not affiliated with ZTM Warszawa. The timetable may be out of date – check the expiry date.',src:'Source code'},
+ru:{title:'Rozkład – расписание офлайн для iOS 6',sub:'расписание офлайн для iOS 6',
+ lead:'Расписание Варшавы в кармане, без интернета: автобусы, трамваи, поезда и метро. Бесплатное приложение для iPhone и iPod touch с iOS 6.',
+ gl_dl:'Скачать',soon:'Первая версия приложения скоро появится здесь.',
+ ver:'Версия {0} · {1} · {2} КБ',b_ipa:'Скачать для iOS 6 (.ipa)',b_apk:'Скачать для Android (.apk)',ver_apk:'Android: версия {0} · {1} КБ',n_apk:'После загрузки откройте файл .apk. Android спросит разрешение на установку из этого источника – разрешите его для этого браузера. Нужен Android 5.0 или новее.',repo_page:'Страница репозитория →',n_ipa:'Откройте .ipa в Filza или iFile и выберите Install (нужен AppSync Unified) либо установите его с компьютера через iTunes.',b_cydia:'Добавить в Cydia',
+ repo_t:'Или добавьте наш репозиторий в Cydia:',repo_how:'Cydia → Manage → Sources → Edit → Add, вставьте адрес, затем найдите «Rozkład». Так Cydia сама сообщит о новых версиях.',
+ gl_start:'Как начать',s1:'Установите приложение на телефон.',s2:'Откройте Мастер и найдите свои остановки (автобус, трамвай, поезд, метро).',s3:'Нажмите «Открыть в приложении Rozkład» – приложение само загрузит расписание и дальше работает без интернета.',
+ b_wiz:'Мастер остановок →',
+ gl_feat:'Возможности',f1:'Работает офлайн – интернет нужен только для загрузки данных.',f2:'Отсчёт до отправления каждую секунду.',f3:'Избранные остановки и напоминания об отправлении.',f4:'Четыре темы в стиле iOS 6 (кожа, красная, классика, графит).',f5:'Языки: польский, английский, русский.',f6:'Данные ZTM Warszawa обновляются каждую неделю.',
+ gl_req:'Требования',req1:'iPhone или iPod touch с iOS 6.0 или новее после джейлбрейка (нужна Cydia). 32-битные устройства: iPhone 3GS, 4, 4S, 5 и iPod touch 4 и 5.',
+ req2:'Проверено на iOS 6.1.3. На более новых системах (например, iOS 8) есть известные проблемы.',
+ req3:'Android 5.0 или новее (приложение для Android пробное, проверено мало).',
+ foot:'Данные расписания: ZTM Warszawa (GTFS), предоставляет mkuran.pl. Приложение неофициальное и не связано с ZTM Warszawa. Расписание может быть неактуальным – проверяйте дату действия.',src:'Исходный код'}
+};
+var CYDIA='https://slam0.github.io/cydia/';   /* osobne repozytorium Cydii na wszystkie projekty */
+var LANG='pl',INFO=null;
+function t(k,a){var s=(I[LANG]&&I[LANG][k])||I.pl[k]||k,i;
+  if(a)for(i=0;i<a.length;i++)s=s.split('{'+i+'}').join(a[i]);
+  return s}
+function detectLang(){
+  var m=/[?&]lang=(pl|en|ru)/.exec(location.search),s,n;
+  if(m)return m[1];
+  try{s=localStorage.getItem('rzlang');if(s&&I[s])return s}catch(e){}
+  n=String(navigator.language||navigator.userLanguage||'pl').toLowerCase().slice(0,2);
+  return n==='ru'?'ru':(n==='pl'?'pl':'en')}
+function paint(){
+  var has=!!INFO;
+  $('have').hidden=!has;$('soon').hidden=has;
+  $('ipabox').hidden=!(has&&INFO.ipa);
+  $('apkbox').hidden=!(has&&INFO.apk);
+  $('ver').hidden=!(has&&INFO.size>0);
+  if(has&&INFO.size>0){
+    $('ver').textContent=t('ver',[INFO.version,INFO.date,Math.round((INFO.ipa?INFO.ipa_size:INFO.size)/1024)]);
+  }
+  if(has&&INFO.apk){
+    $('verapk').textContent=t('ver_apk',[INFO.apk_version||'?',Math.round(INFO.apk_size/1024)]);
+  }
+  $('repo').value=CYDIA;
+  $('repopage').href=CYDIA;
+  $('cyd').href='cydia://url/https://cydia.saurik.com/api/share#?source='+encodeURIComponent(CYDIA)}
+function setLang(l){
+  var els=document.querySelectorAll('[data-t]'),i,h='',L=['pl','en','ru'];
+  LANG=l;
+  for(i=0;i<els.length;i++)els[i].textContent=t(els[i].getAttribute('data-t'));
+  document.title=t('title');
+  document.documentElement.lang=l;
+  $('wiz').href='kreator/?lang='+l;
+  for(i=0;i<L.length;i++)h+='<a data-l="'+L[i]+'"'+(L[i]===l?' class="on"':'')+'>'+L[i].toUpperCase()+'</a>';
+  $('langs').innerHTML=h;
+  paint()}
+$('langs').onclick=function(e){var n=(e||window.event).target;
+  var l=n&&n.getAttribute?n.getAttribute('data-l'):null;
+  if(l){try{localStorage.setItem('rzlang',l)}catch(x){}setLang(l)}};
+$('repo').onclick=$('repo').onfocus=function(){var el=this;setTimeout(function(){try{el.select();el.setSelectionRange(0,999)}catch(e){}},0)};
+setLang(detectLang());
+var x=new XMLHttpRequest();
+x.open('GET','pobierz.json?t='+(+new Date()),true);
+x.onreadystatechange=function(){
+  if(x.readyState!==4)return;
+  if(x.status===200){try{INFO=JSON.parse(x.responseText)}catch(e){INFO=null}}
+  paint()};
+x.send(null);
+})();
+</script></body></html>
