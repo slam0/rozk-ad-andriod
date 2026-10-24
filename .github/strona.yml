@@ -1,0 +1,102 @@
+name: Strona z rozkładem
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'site/**'
+      - 'tools/**'
+      - '.github/workflows/strona.yml'
+  schedule:
+    - cron: '23 3 * * 1'     # co poniedziałek rano pobiera świeże dane
+  workflow_dispatch:
+  workflow_run:            # po zbudowaniu aplikacji sama odświeża stronę
+    workflows: ["Zbuduj aplikację", "Zbuduj aplikację na Androida"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pobierz warsaw.zip
+        run: |
+          mkdir -p work
+          if curl -fL --retry 4 --retry-delay 10 -A "Rozklad-iOS6 (GitHub Actions)" -o work/warsaw.zip https://mkuran.pl/gtfs/warsaw.zip; then
+            echo "Pobrano warsaw.zip z mkuran.pl"
+          elif [ -f dane/warsaw.zip ]; then
+            echo "Nie udało się pobrać, używam pliku dane/warsaw.zip z repozytorium"
+            cp dane/warsaw.zip work/warsaw.zip
+          else
+            echo "Nie udało się pobrać warsaw.zip, a w repozytorium nie ma pliku dane/warsaw.zip"
+            exit 1
+          fi
+          ls -l work/warsaw.zip
+
+      - name: Testy skryptu
+        run: python3 -m unittest discover -s tools/tests -p 'test_build_data.py'
+
+      - name: Podziel dane na małe pliki
+        run: python3 tools/build_data.py work/warsaw.zip _site
+
+      - name: Dodaj stronę
+        run: cp -r site/. _site/
+
+      - name: Pobierz ostatnią zbudowaną aplikację (jeśli już jest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p work/release
+          gh release download najnowsza -R "$GITHUB_REPOSITORY" -D work/release -p '*.deb' -p '*.ipa' \
+            || echo "Nie ma jeszcze opublikowanej wersji aplikacji - strona będzie bez pobierania."
+          ls -l work/release || true
+
+      - name: Pobierz ostatnią aplikację na Androida (jeśli już jest)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p work/android
+          gh release download android-najnowsza -R "$GITHUB_REPOSITORY" -D work/android -p '*.apk' -p 'android-wersja.txt' \
+            || echo "Nie ma jeszcze opublikowanej wersji na Androida."
+          ls -l work/android || true
+
+      - name: Testy skryptu pobierania
+        run: python3 -m unittest discover -s tools/tests -p 'test_build_pobierz.py'
+
+      - name: Złóż pliki do pobrania
+        env:
+          # Repozytorium Cydii jest osobnym repozytorium na GitHubie (zob. README). Zmień nazwę, jeśli nazwiesz je inaczej.
+          CYDIA_REPO_URL: https://slam0.github.io/cydia/
+        run: python3 tools/build_pobierz.py work/release _site "$CYDIA_REPO_URL" work/android
+
+      - name: Rozmiar strony
+        run: |
+          du -sh _site
+          find _site -type f | wc -l
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-22.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
